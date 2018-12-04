@@ -1,7 +1,10 @@
+extern crate edit_distance;
+
 use std::fs::File;
 use std::io::prelude::*;
 use std::env;
 use std::cmp::max;
+use edit_distance::edit_distance;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -10,7 +13,9 @@ fn main() {
 
     let checksum = checksum(&contents);
 
-    println!("{}", checksum);
+    let box_name = box_name(&contents);
+
+    println!("{}, {:?}", checksum, box_name);
 }
 
 fn get_input(filename: &str) -> String {
@@ -24,7 +29,7 @@ fn get_input(filename: &str) -> String {
     contents
 }
 
-fn checksum(input: &String) -> u32 {
+fn checksum(input: &str) -> u32 {
     let counts = input.split_terminator('\n')
         .fold((0u32, 0u32),  |acc, line| {
             let chars: Vec<_> = line.chars().collect();
@@ -55,4 +60,30 @@ fn checksum(input: &String) -> u32 {
         });
 
     counts.0 * counts.1
+}
+
+fn box_name(input: &str) -> Option<String> {
+    let lines: Vec<_> = input.split_terminator('\n').collect();
+
+    for line_x in &lines {
+        for line_y in &lines {
+            if edit_distance(line_x, line_y) == 1 {
+                return Some(remove_diff(line_x, line_y));
+            }
+        }
+    }
+
+    return None;
+}
+
+fn remove_diff(a: &str, b: &str) -> String {
+    a.chars()
+        .zip(b.chars())
+        .fold("".to_string(), |mut acc, (char_a, char_b)| {
+            if char_a == char_b {
+                acc.push(char_a);
+            }
+
+            acc
+        })
 }
