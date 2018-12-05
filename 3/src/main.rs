@@ -21,7 +21,9 @@ fn main() {
 
     let area = calculate_overlapping_area(&claims);
 
-    println!("{}", area);
+    let intact_claim = get_intact_claim(&claims);
+
+    println!("{}, {:?}", area, intact_claim);
 }
 
 fn get_input(filename: &str) -> String {
@@ -58,6 +60,46 @@ fn to_u32(s: &str) -> u32 {
 }
 
 fn calculate_overlapping_area(claims: &Vec<Claim>) -> u32 {
+    let grid = build_access_grid(claims);
+
+    let mut overlapping_area = 0;
+
+    for point in grid {
+        if point > 1 {
+            overlapping_area += 1;
+        }
+    }
+
+    overlapping_area
+}
+
+fn get_intact_claim(claims: &Vec<Claim>) -> Option<&Claim> {
+    let grid_size = get_grid_size(claims);
+    let grid = build_access_grid(claims);
+
+    for claim in claims {
+        let mut intact = true;
+
+        for x in 0..claim.size.0 {
+            for y in 0..claim.size.1 {
+                let pos = (claim.coords.0 + x) * grid_size.1 + (claim.coords.1 + y);
+                let point = grid.get(pos as usize).unwrap();
+
+                if *point > 1 {
+                    intact = false;
+                }
+            }
+        }
+
+        if intact {
+            return Some(&claim);
+        }
+    }
+
+    return None;
+}
+
+fn get_grid_size(claims: &Vec<Claim>) -> (u32, u32) {
     let mut grid_size = (0u32, 0u32);
     
     for claim in claims {
@@ -69,6 +111,12 @@ fn calculate_overlapping_area(claims: &Vec<Claim>) -> u32 {
             grid_size.1 = claim.coords.1 + claim.size.1;
         }
     }
+
+    grid_size
+}
+
+fn build_access_grid(claims: &Vec<Claim>) -> Vec<u32> {
+    let grid_size = get_grid_size(&claims);
 
     let mut grid: Vec<u32> = vec![0; (grid_size.0 * grid_size.1) as usize];
 
@@ -82,16 +130,5 @@ fn calculate_overlapping_area(claims: &Vec<Claim>) -> u32 {
         }
     }
 
-
-    let mut overlapping_area = 0;
-
-    for point in grid {
-        if point > 1 {
-            overlapping_area += 1;
-        }
-    }
-
-    overlapping_area
+    grid
 }
-
-
